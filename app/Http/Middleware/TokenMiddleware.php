@@ -8,16 +8,28 @@ use Symfony\Component\HttpFoundation\Response;
 
 class TokenMiddleware
 {
-    public function handle(Request $request, Closure $next): Response
-    {
-        $token = $request->header('Authorization');
+   public function handle(Request $request, Closure $next): Response
+{
+    $token = $request->bearerToken();
 
-        $token = str_replace('Bearer ', '', $token);
+    // Uncomment only for debugging
+    // logger()->info([
+    //     'request_token' => $token,
+    //     'config_token' => config('services.token.key'),
+    // ]);
 
-        if ($token !== config('services.token.key')) {
-            return response()->json(['error' => 'Invalid token'], 401);
-        }
-
-        return $next($request);
+    if (empty($token)) {
+        return response()->json([
+            'message' => 'Authorization token missing'
+        ], 401);
     }
+
+    if ($token !== config('services.token.key')) {
+        return response()->json([
+            'message' => 'Invalid token'
+        ], 401);
+    }
+
+    return $next($request);
+}
 }
